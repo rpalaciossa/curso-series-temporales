@@ -1,6 +1,5 @@
 #ITERA FECHA POR FECHA Y VA A HACIENDO UNA PREDICCIÓN DE CADA FECHA CON CRITERIO DE ENTRADA EL CIERRE DEL DÍA DE LA PREDICCIÓN Y SALIDA OTRO CIERRE
 
-#UTILIZA LA MISMA ARQUITECTURA QUE EN LOS DE VAL_TEST, DONDE UNA VEZ QUE TENGA LOS MEJORES PARÁMETROS, YA LO PASO AQUÍ Y HAGO LA PREDICCIÓN FECHA POR FECHA SIN DIVIDIR EN TEST NI VALIDACIÓN
 
 import numpy as np
 import pandas as pd
@@ -48,11 +47,7 @@ from stockstats import StockDataFrame as Sdf
 #from tti.indicators import AccumulationDistributionLine
 from tti.indicators import *
 
-#PARA df4
-""" import talib
-from talib import MA_Type
-from talib import abstract
-from talib.abstract import * """
+
 
 #PARA df5
 from finta import TA
@@ -96,9 +91,8 @@ num_indicadores = 6
 #Se pueden filtrar las columnas que quiera, si lo quiero por num_indicadores, se pone como  comentario
 cols = ["Close", "High", "Low", "Open", "Volume", "RSI_14", "MACD_signal", "EMA_10", "EMA_50", "kalman", "bollinger_mid", "bollinger_upper" ,"bollinger_lower"]
 
-# generate the input and output sequences
-n_lookback = 30  # length of  input sequences (lookback period)
-n_forecast = 1  # length of output sequences (forecast period)
+n_lookback = 30 
+n_forecast = 1  
 
 epochs = 10
 batch_size = 64
@@ -320,7 +314,7 @@ for fecha in fechas:
     with open(fecha_a_predecir_path, 'w') as f:
         f.write(fecha_str)
 
-    print(f"\n📅 Procesando fecha: {fecha_str}")
+    print(f"\nProcesando fecha: {fecha_str}")
 
     # Eliminar NaNs
     df = df.copy().dropna()
@@ -353,7 +347,7 @@ for fecha in fechas:
         if is_classification:
             raise ValueError("ARIMA/SARIMAX no es compatible con clasificación ('target_class').")
 
-        print(f"🔍 Entrenando modelo {arquitectura} con auto_arima...")
+        print(f"Entrenando modelo {arquitectura} con auto_arima...")
 
         # Serie completa en escala real
         y_series = df[predicted_feature]
@@ -366,7 +360,7 @@ for fecha in fechas:
             y_series,
             seasonal=is_seasonal,
             m=5 if is_seasonal else 1,  # Usar 5 para días laborables, 1 si ARIMA
-            trace=True,                 # ✅ Muestra AIC, parámetros, etc.
+            trace=True,                 # Muestra AIC, parámetros, etc.
             error_action="ignore",
             suppress_warnings=False,
             stepwise=True
@@ -379,7 +373,7 @@ for fecha in fechas:
         sm_model = stepwise_model.fit(y_series)
         forecast = sm_model.predict(n_periods=1).iloc[0]
 
-        print("📈 Forecast (siguiente valor):", forecast)
+        print("Forecast (siguiente valor):", forecast)
 
 
 
@@ -416,11 +410,11 @@ for fecha in fechas:
         predicted_col_idx = df.columns.get_loc(predicted_feature)
 
         if is_classification:
-            print("🔍 Clasificación multiclase (-1, 0, 1): no se aplica escalado.")
+            print("Clasificación multiclase (-1, 0, 1): no se aplica escalado.")
             scaler = None
             scaled_data = df.values
         else:
-            print("🔧 Escalando datos para regresión...")
+            print("Escalando datos para regresión...")
             scaler = MinMaxScaler(feature_range=(-1, 1))
             scaled_data = scaler.fit_transform(df)
             joblib.dump(scaler, "scaler.pkl")
@@ -447,7 +441,7 @@ for fecha in fechas:
             y_mapped = Y.flatten()
 
         # ========= ENTRENAMIENTO =========
-        print("🚀 Entrenando modelo Random Forest...")
+        print("Entrenando modelo Random Forest...")
 
         if is_classification:
             model = RandomForestClassifier(n_estimators=epochs, random_state=42)
@@ -470,7 +464,7 @@ for fecha in fechas:
             forecast = scaler.inverse_transform(dummy)[0, predicted_col_idx]
 
         # ========= RESULTADO =========
-        print("📈 Forecast para mañana:", forecast)
+        print("Forecast para mañana:", forecast)
 
     elif arquitectura == "XGBOOST":
         
@@ -505,22 +499,22 @@ for fecha in fechas:
         
 
         if predicted_feature not in df.columns:
-            raise ValueError(f"❌ La columna '{predicted_feature}' no está en el DataFrame")
+            raise ValueError(f"La columna '{predicted_feature}' no está en el DataFrame")
 
         predicted_col_idx = df.columns.get_loc(predicted_feature)
 
         # ========= ESCALADO =========
         if predicted_feature not in df.columns:
-            raise ValueError(f"❌ La columna '{predicted_feature}' no está en el DataFrame")
+            raise ValueError(f"La columna '{predicted_feature}' no está en el DataFrame")
 
         predicted_col_idx = df.columns.get_loc(predicted_feature)
 
         if is_classification:
-            print("🔍 Clasificación multiclase (-1, 0, 1): no se aplica escalado.")
+            print("Clasificación multiclase (-1, 0, 1): no se aplica escalado.")
             scaler = None
             scaled_data = df.values
         else:
-            print("🔧 Escalando datos...")
+            print("Escalando datos...")
             scaler = MinMaxScaler(feature_range=(-1, 1))
             scaled_data = scaler.fit_transform(df)
             joblib.dump(scaler, "scaler.pkl")
@@ -570,7 +564,7 @@ for fecha in fechas:
             xgb_params["eval_metric"] = loss_function
 
         # ========= ENTRENAMIENTO =========
-        print("🚀 Entrenando modelo...")
+        print("Entrenando modelo...")
         model = xgb.train(
             params=xgb_params,
             dtrain=dtrain,
@@ -597,7 +591,7 @@ for fecha in fechas:
             forecast = scaler.inverse_transform(dummy)[0, predicted_col_idx]
 
         # ========= RESULTADO =========
-        print("📈 Forecast para mañana:", forecast)
+        print("Forecast para mañana:", forecast)
         model.save_model(modelo_path)
         
     elif arquitectura == "LIGHTGBM":
@@ -624,7 +618,7 @@ for fecha in fechas:
         # Obtener el índice de la columna a predecir
         predicted_col_idx = df.columns.get_loc(predicted_feature)
 
-        print("⚙️ Entrenamiento inicial")
+        print("Entrenamiento inicial")
 
         # Validar que la columna existe
         if predicted_feature not in df.columns:
@@ -632,7 +626,7 @@ for fecha in fechas:
             exit(0)
 
         if is_classification:
-            print("🔍 Clasificación: no se aplicará escalado.")
+            print("Clasificación: no se aplicará escalado.")
             scaler = None
             scaled_data = df.values  # Usar datos tal cual para clasificación
         else:
@@ -727,7 +721,7 @@ for fecha in fechas:
         else:
             forecast = forecast_scaled
 
-        print("✅ Predicción futura (forecast):", forecast)
+        print("Predicción futura (forecast):", forecast)
 
         
     else:
@@ -741,7 +735,7 @@ for fecha in fechas:
         # Obtener el índice de la columna a predecir
         predicted_col_idx = df.columns.get_loc(predicted_feature)
         if not os.path.exists(modelo_path) or not os.path.exists(scaler_path):
-            print("⚙️ Entrenamiento inicial")
+            print("Entrenamiento inicial")
 
             # Validar que la columna existe
             if predicted_feature not in df.columns:
@@ -749,7 +743,7 @@ for fecha in fechas:
                 exit(0)
 
             if is_classification:
-                print("🔍 Clasificación: no se aplicará escalado.")
+                print("Clasificación: no se aplicará escalado.")
                 scaler = None
                 scaled_data = df.values  # Usar datos tal cual para clasificación
             else:
@@ -930,7 +924,7 @@ for fecha in fechas:
             # --------------------------
             # Entrenamiento incremental
             # --------------------------
-            print("➕ Entrenamiento incremental con nueva fecha")
+            print("Entrenamiento incremental con nueva fecha")
 
             # Cargar modelo y scaler entrenado con varias columnas
             model = load_model(modelo_path)
@@ -5292,5 +5286,6 @@ for fecha in fechas:
             df_resultados_forecast_10.to_csv(csv_file_10, mode='w', index=False, header=True)
         else:
             df_resultados_forecast_10.to_csv(csv_file_10, mode='a', index=False, header=False)
+
 
 
